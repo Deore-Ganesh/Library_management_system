@@ -7,7 +7,6 @@ public class Menu {
 
     private final Scanner sc = new Scanner(System.in);
     private final LibraryService service = new LibraryService();
-
     public void start() {
         while (true) {
             System.out.println("\nChoose the service");

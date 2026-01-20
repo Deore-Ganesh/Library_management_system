@@ -36,22 +36,40 @@ public class LibraryService {
     // ISSUE BOOK
     public void issueBook(String bookName) {
 
-        String sql =
-                "UPDATE book SET available = 0 WHERE book_name = ? AND available = 1";
+        String findBook =
+                "SELECT book_id FROM book WHERE book_name = ? AND available = 1";
+        String insertIssue =
+                "INSERT INTO issued_books (book_id) VALUES (?)";
+        String updateBook =
+                "UPDATE book SET available = 0 WHERE book_id = ?";
 
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = DBConnection.getConnection()) {
 
-            ps.setString(1, bookName);
-            int rows = ps.executeUpdate();
+            con.setAutoCommit(false); // start transaction
 
-            if (rows > 0) {
-                System.out.println("Book issued successfully.");
-            } else {
-                System.out.println("Book not available or not found.");
+            PreparedStatement ps1 = con.prepareStatement(findBook);
+            ps1.setString(1, bookName);
+            ResultSet rs = ps1.executeQuery();
+
+            if (!rs.next()) {
+                System.out.println("Book not available or already issued.");
+                return;
             }
 
-        } catch (SQLException e) {
+            int bookId = rs.getInt("book_id");
+
+            PreparedStatement ps2 = con.prepareStatement(insertIssue);
+            ps2.setInt(1, bookId);
+            ps2.executeUpdate();
+
+            PreparedStatement ps3 = con.prepareStatement(updateBook);
+            ps3.setInt(1, bookId);
+            ps3.executeUpdate();
+
+            con.commit();
+            System.out.println("Book issued successfully. Book ID: " + bookId);
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
